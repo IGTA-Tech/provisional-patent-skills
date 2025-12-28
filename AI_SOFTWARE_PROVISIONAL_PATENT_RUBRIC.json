@@ -1,0 +1,434 @@
+{
+  "title": "AI/Software Provisional Patent Application Scoring Rubric",
+  "description": "95th Percentile Quality Assessment for Software/AI Inventions",
+  "version": "1.0.0",
+  "total_points": 100,
+  "passing_threshold": 75,
+  "top_5_percent_threshold": 90,
+  "sources": [
+    "USPTO 2024-2025 AI Guidance",
+    "MPEP 2161 Written Description Requirements",
+    "35 USC 112 Enablement Standards",
+    "Patent Attorney Expert Transcripts (3 videos analyzed)",
+    "Federal Circuit Written Description Case Law"
+  ],
+
+  "categories": {
+    "technical_disclosure": {
+      "name": "Technical Disclosure Quality",
+      "max_points": 30,
+      "rationale": "The specification must enable one skilled in the art to make and use the invention without undue experimentation",
+      "criteria": [
+        {
+          "id": "how_not_what",
+          "description": "Describes HOW the system works, not just WHAT it does",
+          "points": 8,
+          "requirements": [
+            "Method steps clearly articulated",
+            "Data flow explained",
+            "Processing logic described",
+            "Avoids mere functional language"
+          ],
+          "red_flags": [
+            "Only describes outcomes/benefits",
+            "Vague 'using AI' or 'machine learning' without specifics",
+            "Marketing language instead of technical"
+          ]
+        },
+        {
+          "id": "hardware_context",
+          "description": "Software described in context of specific hardware",
+          "points": 6,
+          "requirements": [
+            "CPU/processor mentioned",
+            "Memory/storage components",
+            "Network interfaces if applicable",
+            "Generalized then specific examples given"
+          ],
+          "example": "A computing device comprising a processor, persistent storage, volatile storage, and network interface..."
+        },
+        {
+          "id": "algorithm_disclosure",
+          "description": "Algorithms and methods sufficiently detailed",
+          "points": 8,
+          "requirements": [
+            "Step-by-step method description",
+            "Input/output specifications",
+            "Processing transformations",
+            "Conditional logic where applicable"
+          ],
+          "for_ai_inventions": [
+            "Training methodology if novel",
+            "Model architecture if novel",
+            "Data preprocessing steps",
+            "Output generation process"
+          ]
+        },
+        {
+          "id": "enablement",
+          "description": "Would enable skilled developer to implement without asking questions",
+          "points": 8,
+          "test": "Could you outsource development using only this document as the specification?"
+        }
+      ]
+    },
+
+    "drawings_figures": {
+      "name": "Drawings and Visual Documentation",
+      "max_points": 20,
+      "rationale": "A drawing is worth a thousand words - visual storytelling reduces ambiguity",
+      "criteria": [
+        {
+          "id": "system_diagram",
+          "description": "Network/system architecture diagram",
+          "points": 5,
+          "requirements": [
+            "Shows all major components",
+            "Connections between components",
+            "Data flow directions",
+            "Network topology if applicable"
+          ]
+        },
+        {
+          "id": "hardware_block_diagram",
+          "description": "Block diagram showing hardware relationships",
+          "points": 4,
+          "requirements": [
+            "Processor, memory, I/O components",
+            "Interconnections",
+            "Component callouts with reference numbers"
+          ]
+        },
+        {
+          "id": "method_flowcharts",
+          "description": "Flowcharts illustrating software processes",
+          "points": 6,
+          "requirements": [
+            "Clear start/end points",
+            "Decision diamonds for conditionals",
+            "Process steps in rectangles",
+            "Data flow arrows"
+          ],
+          "recommendation": "Break complex methods into multiple figures"
+        },
+        {
+          "id": "interface_mockups",
+          "description": "UI/UX interface examples if applicable",
+          "points": 3,
+          "requirements": [
+            "Input fields shown",
+            "User interaction points",
+            "Output display areas"
+          ]
+        },
+        {
+          "id": "data_flow_swimlane",
+          "description": "Swim lane or data flow diagrams",
+          "points": 2,
+          "purpose": "Shows data movement between components/entities"
+        }
+      ]
+    },
+
+    "novelty_differentiation": {
+      "name": "Novelty and Point of Difference",
+      "max_points": 15,
+      "rationale": "Must overcome future arguments from examiners, licensees, and infringers",
+      "criteria": [
+        {
+          "id": "prior_art_awareness",
+          "description": "Evidence of prior art research conducted",
+          "points": 5,
+          "methods": [
+            "Google image/shopping search",
+            "Patent database search",
+            "Academic literature review",
+            "Competitive product analysis"
+          ]
+        },
+        {
+          "id": "point_of_difference",
+          "description": "Clear articulation of what's new/different",
+          "points": 5,
+          "requirements": [
+            "Explicit comparison to existing approaches",
+            "Technical advantages explained",
+            "Novel combination identified",
+            "Improvement over prior art stated"
+          ]
+        },
+        {
+          "id": "problem_solution",
+          "description": "Problem-solution framework clearly established",
+          "points": 5,
+          "requirements": [
+            "Technical problem described clearly",
+            "Why existing solutions are inadequate",
+            "How invention solves the problem",
+            "Technical improvement achieved"
+          ]
+        }
+      ]
+    },
+
+    "scope_protection": {
+      "name": "Breadth of Protection and Variations",
+      "max_points": 15,
+      "rationale": "Stealing from yourself to protect the innovation, not just the invention",
+      "criteria": [
+        {
+          "id": "workarounds_variations",
+          "description": "Alternative implementations described",
+          "points": 8,
+          "principle": "If you don't steal your idea from yourself, competitors will",
+          "requirements": [
+            "Multiple ways to achieve same result",
+            "Different hardware configurations",
+            "Alternative algorithms/methods",
+            "Generalized language (e.g., 'any closing mechanism' not just 'velcro')"
+          ],
+          "example": "The closure may be velcro, a snap, a hook, a zipper, or any mechanical coupling/uncoupling device"
+        },
+        {
+          "id": "future_variations",
+          "description": "Second and third generation improvements described",
+          "points": 4,
+          "requirements": [
+            "Better versions for when price is no object",
+            "Cheaper/faster versions for competition blocking",
+            "Made up examples are acceptable"
+          ]
+        },
+        {
+          "id": "broad_to_narrow",
+          "description": "Progression from broad concepts to specific implementations",
+          "points": 3,
+          "structure": [
+            "Introduce concepts in general terms",
+            "Provide specific concrete examples",
+            "Conclude by reemphasizing flexibility"
+          ]
+        }
+      ]
+    },
+
+    "implementation_feasibility": {
+      "name": "Manufacturing/Implementation Details",
+      "max_points": 10,
+      "rationale": "If they can't make it, no one will pay for it",
+      "criteria": [
+        {
+          "id": "manufacturing_info",
+          "description": "How product can be manufactured/deployed",
+          "points": 5,
+          "for_software": [
+            "Development stack/platform",
+            "Deployment architecture",
+            "Third-party dependencies",
+            "Infrastructure requirements"
+          ]
+        },
+        {
+          "id": "materials_components",
+          "description": "Materials, components, or technology stack specified",
+          "points": 3,
+          "requirements": [
+            "Programming languages if relevant",
+            "Database technologies",
+            "Cloud services",
+            "Hardware specifications"
+          ]
+        },
+        {
+          "id": "real_world_use",
+          "description": "Walkthrough of actual use case",
+          "points": 2,
+          "requirements": [
+            "Who uses it",
+            "How they interact with it",
+            "What happens at each step",
+            "Expected outputs"
+          ]
+        }
+      ]
+    },
+
+    "ai_specific_requirements": {
+      "name": "AI/ML Specific Patentability",
+      "max_points": 10,
+      "rationale": "2024-2025 USPTO guidance requires specific technical framing for AI inventions",
+      "criteria": [
+        {
+          "id": "practical_application",
+          "description": "AI integrated into practical application",
+          "points": 4,
+          "requirements": [
+            "Not mere data processing",
+            "Tangible technical improvement",
+            "Specific technical field application",
+            "Hardware integration shown"
+          ],
+          "examples": [
+            "Enhancing accuracy of speech recognition",
+            "Improving computational efficiency",
+            "Reducing network latency",
+            "Improving security"
+          ]
+        },
+        {
+          "id": "not_abstract",
+          "description": "Avoids abstract idea characterization",
+          "points": 3,
+          "strategies": [
+            "Avoid unnecessary math algorithm recitation",
+            "Focus on technical features",
+            "Clarify how invention transcends mental processes",
+            "Show specific hardware implementation"
+          ]
+        },
+        {
+          "id": "inventorship_documentation",
+          "description": "Human contribution to AI-assisted invention documented",
+          "points": 3,
+          "per_2025_guidance": [
+            "Document thought conception before AI tools",
+            "Document why specific AI outputs selected",
+            "Document human modifications to AI outputs",
+            "Clear inventorship chain"
+          ]
+        }
+      ]
+    }
+  },
+
+  "grading_scale": {
+    "95-100": {
+      "label": "95th Percentile - Transaction Ready",
+      "description": "Ready for licensing, investment, and USPTO filing with minimal revision"
+    },
+    "85-94": {
+      "label": "Excellent",
+      "description": "Strong application with minor gaps to address"
+    },
+    "75-84": {
+      "label": "Good - Passing",
+      "description": "Solid foundation but needs strengthening in key areas"
+    },
+    "65-74": {
+      "label": "Needs Improvement",
+      "description": "Significant gaps that could cause priority date issues"
+    },
+    "50-64": {
+      "label": "Insufficient",
+      "description": "May provide filing date but unlikely to support strong claims"
+    },
+    "below_50": {
+      "label": "Worthless",
+      "description": "One-paragraph abstracts, marketing language, no technical substance"
+    }
+  },
+
+  "red_flags": {
+    "automatic_deductions": [
+      {
+        "flag": "Marketing language instead of technical",
+        "deduction": -10,
+        "description": "Trying to sell rather than disclose"
+      },
+      {
+        "flag": "Only describes WHAT, not HOW",
+        "deduction": -15,
+        "description": "Functional claims without implementation"
+      },
+      {
+        "flag": "No drawings or figures",
+        "deduction": -10,
+        "description": "Missing visual documentation"
+      },
+      {
+        "flag": "Vague AI/ML references",
+        "deduction": -8,
+        "description": "Using AI or machine learning without specifics"
+      },
+      {
+        "flag": "No hardware context for software",
+        "deduction": -10,
+        "description": "Abstract software without hardware tie"
+      }
+    ]
+  },
+
+  "bonus_points": {
+    "max_bonus": 10,
+    "items": [
+      {
+        "bonus": "Informal claims included",
+        "points": 3,
+        "reason": "While not required, provides claim strategy foundation"
+      },
+      {
+        "bonus": "Multiple embodiments detailed",
+        "points": 3,
+        "reason": "Broader protection scope"
+      },
+      {
+        "bonus": "Competitive workaround analysis",
+        "points": 2,
+        "reason": "Proactively blocks competitor designs"
+      },
+      {
+        "bonus": "Continuation strategy considered",
+        "points": 2,
+        "reason": "Foundation for future applications"
+      }
+    ]
+  },
+
+  "quick_checklist": {
+    "must_have": [
+      "Detailed description (95% of effort goes here)",
+      "System/network diagram",
+      "At least one method flowchart",
+      "Hardware context for software",
+      "HOW it works, not just WHAT it does",
+      "Point of difference from prior art",
+      "Workarounds and variations"
+    ],
+    "nice_to_have": [
+      "Background section (keep brief, avoid admissions)",
+      "Informal claims",
+      "Multiple use case examples",
+      "Manufacturing/implementation details",
+      "UI mockups if applicable"
+    ],
+    "avoid": [
+      "Agonizing over title",
+      "Field of invention section",
+      "Long background sections",
+      "Perfect CAD drawings (sketches are fine)",
+      "Patent attorney writing style",
+      "Marketing language"
+    ]
+  },
+
+  "transaction_ready_definition": {
+    "description": "A transaction-ready provisional patent application overcomes three future arguments:",
+    "arguments": [
+      {
+        "audience": "Licensees/Investors",
+        "argument": "Why should we pay you?",
+        "how_overcome": "Clear prior art differentiation and comprehensive disclosure"
+      },
+      {
+        "audience": "Patent Examiner",
+        "argument": "This is obvious/not novel",
+        "how_overcome": "Detailed technical disclosure with clear point of difference"
+      },
+      {
+        "audience": "Infringers/Copycats",
+        "argument": "We can design around this",
+        "how_overcome": "Workarounds and variations already covered in application"
+      }
+    ]
+  }
+}
