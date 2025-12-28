@@ -1,29 +1,26 @@
 """
 Configuration for Patent Opportunity Finder
 ============================================
-Store API keys and settings here.
-
-SECURITY NOTE: Set API keys via environment variables or create a local .env file.
-Copy config.example.py to config.py and add your keys there (config.py is gitignored).
+Copy this file to config.py and add your API keys.
 """
 
 import os
 
 # =============================================================================
-# API KEYS (set via environment variables)
+# API KEYS - Add your keys here
 # =============================================================================
 
 # Claude (Anthropic) API - For AI-powered analysis and drafting
-ANTHROPIC_API_KEY = os.getenv("ANTHROPIC_API_KEY", "")
+ANTHROPIC_API_KEY = "your-anthropic-key-here"
 
 # OpenAI API - Alternative AI provider
-OPENAI_API_KEY = os.getenv("OPENAI_API_KEY", "")
+OPENAI_API_KEY = "your-openai-key-here"
 
 # Perplexity API - For research with citations
-PERPLEXITY_API_KEY = os.getenv("PERPLEXITY_API_KEY", "")
+PERPLEXITY_API_KEY = "your-perplexity-key-here"
 
 # Krea AI API - For diagram/artwork generation
-KREA_API_KEY = os.getenv("KREA_API_KEY", "")
+KREA_API_KEY = "your-krea-key-here"
 
 # =============================================================================
 # SETTINGS
@@ -71,10 +68,10 @@ def get_api_keys():
 def get_available_providers():
     """Check which providers are configured"""
     providers = []
-    if ANTHROPIC_API_KEY:
+    if ANTHROPIC_API_KEY and not ANTHROPIC_API_KEY.startswith("your-"):
         providers.append("claude")
-    if OPENAI_API_KEY:
+    if OPENAI_API_KEY and not OPENAI_API_KEY.startswith("your-"):
         providers.append("openai")
-    if PERPLEXITY_API_KEY:
+    if PERPLEXITY_API_KEY and not PERPLEXITY_API_KEY.startswith("your-"):
         providers.append("perplexity")
     return providers

@@ -1,4 +1,5 @@
 # Local configuration with API keys
+config.py
 config.local.py
 .env
 
