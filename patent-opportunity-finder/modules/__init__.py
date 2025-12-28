@@ -14,6 +14,17 @@ from .ai_providers import (
 )
 from .opportunity_finder import OpportunityFinder, find_opportunities
 from .patent_drafter import PatentDrafter, draft_patent
+from .source_integrations import (
+    SourceManager,
+    SourceContext,
+    SourceFile,
+    LocalFolderScanner,
+    GitHubIntegration,
+    GoogleDriveIntegration,
+    scan_local_folder,
+    fetch_github_repo,
+    fetch_gdrive_folder
+)
 
 __all__ = [
     'PriorArtSearcher',
@@ -28,5 +39,14 @@ __all__ = [
     'OpportunityFinder',
     'find_opportunities',
     'PatentDrafter',
-    'draft_patent'
+    'draft_patent',
+    'SourceManager',
+    'SourceContext',
+    'SourceFile',
+    'LocalFolderScanner',
+    'GitHubIntegration',
+    'GoogleDriveIntegration',
+    'scan_local_folder',
+    'fetch_github_repo',
+    'fetch_gdrive_folder'
 ]

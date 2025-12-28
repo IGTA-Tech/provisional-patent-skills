@@ -17,6 +17,10 @@ from modules.prior_art_search import PriorArtSearcher, search_prior_art, find_wh
 from modules.ai_providers import AIOrchestrator, YouTubeTranscriptProvider
 from modules.opportunity_finder import OpportunityFinder, find_opportunities
 from modules.patent_drafter import PatentDrafter, draft_patent
+from modules.source_integrations import (
+    SourceManager, SourceContext, LocalFolderScanner,
+    GitHubIntegration, GoogleDriveIntegration
+)
 import config
 
 # =============================================================================
@@ -78,6 +82,13 @@ if 'drafted_patent' not in st.session_state:
     st.session_state.drafted_patent = None
 if 'ai_orchestrator' not in st.session_state:
     st.session_state.ai_orchestrator = AIOrchestrator(**config.get_api_keys())
+if 'loaded_sources' not in st.session_state:
+    st.session_state.loaded_sources = []  # List of SourceContext objects
+if 'source_manager' not in st.session_state:
+    st.session_state.source_manager = SourceManager(
+        github_token=os.getenv("GITHUB_TOKEN"),
+        gdrive_credentials=os.getenv("GOOGLE_CREDENTIALS_PATH")
+    )
 
 # =============================================================================
 # SIDEBAR
@@ -146,7 +157,8 @@ st.markdown('<p class="main-header">🔬 Patent Opportunity Finder</p>', unsafe_
 st.markdown('<p class="sub-header">Find prior art, identify opportunities, and draft provisional patents</p>', unsafe_allow_html=True)
 
 # Tabs
-tab1, tab2, tab3, tab4, tab5 = st.tabs([
+tab1, tab2, tab3, tab4, tab5, tab6 = st.tabs([
+    "📁 Sources",
     "🔍 Prior Art Search",
     "💡 Find Opportunities",
     "📝 Draft Patent",
@@ -155,10 +167,140 @@ tab1, tab2, tab3, tab4, tab5 = st.tabs([
 ])
 
 # =============================================================================
-# TAB 1: PRIOR ART SEARCH
+# TAB 1: SOURCES (Local Folders, GitHub, Google Drive)
 # =============================================================================
 
 with tab1:
+    st.markdown("### 📁 Load Source Context")
+    st.markdown("Load code repositories, local folders, or Google Drive folders to provide context for patent analysis and drafting.")
+
+    # Source type selection
+    source_type = st.selectbox(
+        "Source Type",
+        ["Local Folder", "GitHub Repository", "Google Drive Folder"],
+        key="source_type_select"
+    )
+
+    col1, col2 = st.columns([3, 1])
+
+    with col1:
+        if source_type == "Local Folder":
+            source_path = st.text_input(
+                "Folder Path",
+                placeholder="/path/to/your/project or ~/my-project",
+                key="local_folder_path"
+            )
+            st.caption("Enter the full path to a local folder containing your code or documents.")
+
+        elif source_type == "GitHub Repository":
+            source_path = st.text_input(
+                "GitHub URL or owner/repo",
+                placeholder="https://github.com/owner/repo or owner/repo",
+                key="github_url"
+            )
+            st.caption("Enter a GitHub repository URL or owner/repo format.")
+
+        elif source_type == "Google Drive Folder":
+            source_path = st.text_input(
+                "Google Drive Folder URL or ID",
+                placeholder="https://drive.google.com/drive/folders/... or folder ID",
+                key="gdrive_url"
+            )
+            st.caption("Enter a Google Drive folder URL or folder ID. Requires configured credentials.")
+
+    with col2:
+        max_files = st.number_input("Max Files", min_value=10, max_value=200, value=50, key="max_files_input")
+
+    # Load button
+    if st.button("📥 Load Source", type="primary", key="load_source_btn"):
+        if source_path:
+            with st.spinner(f"Loading {source_type}..."):
+                try:
+                    # Map source type
+                    type_map = {
+                        "Local Folder": "local",
+                        "GitHub Repository": "github",
+                        "Google Drive Folder": "gdrive"
+                    }
+
+                    ctx = st.session_state.source_manager.load_source(
+                        source_path,
+                        source_type=type_map[source_type],
+                        max_files=max_files
+                    )
+
+                    # Add to loaded sources
+                    st.session_state.loaded_sources.append(ctx)
+                    st.success(f"Loaded {ctx.total_files} files from {ctx.source_name}")
+
+                except Exception as e:
+                    st.error(f"Error loading source: {str(e)}")
+        else:
+            st.warning("Please enter a source path or URL")
+
+    st.markdown("---")
+
+    # Show loaded sources
+    st.markdown("### 📚 Loaded Sources")
+
+    if st.session_state.loaded_sources:
+        for i, ctx in enumerate(st.session_state.loaded_sources):
+            with st.expander(f"**{ctx.source_type.upper()}**: {ctx.source_name} ({ctx.total_files} files)", expanded=False):
+                st.markdown(f"**Summary:**\n```\n{ctx.summary}\n```")
+
+                st.markdown("**Structure:**")
+                if ctx.structure.get("folders"):
+                    st.markdown(f"- Folders: {len(ctx.structure['folders'])}")
+                st.markdown(f"- Files: {len(ctx.structure.get('files', []))}")
+
+                # Show file list
+                st.markdown("**Files loaded:**")
+                file_list = [f.path for f in ctx.files[:30]]
+                for f in file_list:
+                    st.text(f"  • {f}")
+                if len(ctx.files) > 30:
+                    st.text(f"  ... and {len(ctx.files) - 30} more")
+
+                # Remove button
+                if st.button(f"🗑️ Remove", key=f"remove_source_{i}"):
+                    st.session_state.loaded_sources.pop(i)
+                    st.rerun()
+
+        # Export combined context
+        st.markdown("---")
+        if st.button("📋 Copy Combined Context to Clipboard", key="copy_context_btn"):
+            combined = ""
+            for ctx in st.session_state.loaded_sources:
+                combined += f"\n\n## {ctx.source_type.upper()}: {ctx.source_name}\n\n"
+                combined += ctx.summary + "\n\n"
+                for f in ctx.files[:20]:
+                    combined += f"### {f.path}\n```\n{f.content[:3000]}\n```\n\n"
+            st.code(combined[:50000], language="markdown")
+            st.success("Context displayed above - copy as needed")
+
+        # Show total stats
+        total_files = sum(ctx.total_files for ctx in st.session_state.loaded_sources)
+        total_size = sum(ctx.total_size for ctx in st.session_state.loaded_sources)
+        st.info(f"**Total:** {len(st.session_state.loaded_sources)} sources, {total_files} files, {total_size / 1024:.1f} KB")
+
+    else:
+        st.info("No sources loaded yet. Add a local folder, GitHub repo, or Google Drive folder above.")
+
+    # Quick tips
+    st.markdown("---")
+    st.markdown("""
+    **Tips:**
+    - **Local Folders**: Great for your own projects. Scans .py, .js, .ts, .md, .json and more.
+    - **GitHub Repos**: Fetches public repos directly. For private repos, set GITHUB_TOKEN env var.
+    - **Google Drive**: Requires Google API credentials. Set GOOGLE_CREDENTIALS_PATH env var.
+    - Sources are used in **Draft Patent** tab to provide technical context for AI drafting.
+    """)
+
+# =============================================================================
+# TAB 2: PRIOR ART SEARCH
+# =============================================================================
+
+with tab2:
     st.markdown("### Search USPTO Patent Database")
 
     col1, col2 = st.columns([3, 1])
@@ -232,10 +374,10 @@ with tab1:
                     st.markdown(f"**CPC Codes:** {', '.join(patent.cpc_codes[:3])}")
 
 # =============================================================================
-# TAB 2: FIND OPPORTUNITIES
+# TAB 3: FIND OPPORTUNITIES
 # =============================================================================
 
-with tab2:
+with tab3:
     st.markdown("### Identify Patent Opportunities")
 
     opp_keywords = st.text_input(
@@ -310,10 +452,10 @@ with tab2:
                     st.info("Go to 'Draft Patent' tab to generate application")
 
 # =============================================================================
-# TAB 3: DRAFT PATENT
+# TAB 4: DRAFT PATENT
 # =============================================================================
 
-with tab3:
+with tab4:
     st.markdown("### Draft Provisional Patent Application")
 
     draft_mode = st.radio(
@@ -321,6 +463,23 @@ with tab3:
         ["From Description", "From Opportunity"],
         horizontal=True
     )
+
+    # Source context section
+    if st.session_state.loaded_sources:
+        st.markdown("#### 📁 Source Context Available")
+        use_sources = st.checkbox(
+            f"Include context from {len(st.session_state.loaded_sources)} loaded source(s)",
+            value=True,
+            key="use_sources_for_draft"
+        )
+        if use_sources:
+            source_names = [ctx.source_name for ctx in st.session_state.loaded_sources]
+            st.caption(f"Sources: {', '.join(source_names)}")
+    else:
+        use_sources = False
+        st.info("💡 Tip: Load source files in the 'Sources' tab to provide code context for better patent drafts.")
+
+    st.markdown("---")
 
     if draft_mode == "From Description":
         inv_title = st.text_input(
@@ -343,11 +502,27 @@ with tab3:
             if not inv_title or not inv_description:
                 st.warning("Please provide title and description")
             else:
+                # Build source context if enabled
+                source_context = ""
+                if use_sources and st.session_state.loaded_sources:
+                    source_context = "\n\n--- SOURCE CODE CONTEXT ---\n"
+                    for ctx in st.session_state.loaded_sources:
+                        source_context += f"\n## {ctx.source_type.upper()}: {ctx.source_name}\n"
+                        source_context += f"{ctx.summary}\n\n"
+                        for f in ctx.files[:15]:  # Limit files per source
+                            source_context += f"### File: {f.path}\n```{f.language.lower() if f.language else ''}\n"
+                            source_context += f.content[:5000]  # Truncate long files
+                            source_context += "\n```\n\n"
+
                 with st.spinner("Generating patent application (this may take a minute)..."):
                     drafter = PatentDrafter(st.session_state.ai_orchestrator)
+                    # Append source context to description
+                    full_description = inv_description
+                    if source_context:
+                        full_description += source_context
                     patent = drafter.draft_from_description(
                         inv_title,
-                        inv_description,
+                        full_description,
                         inv_field
                     )
                     st.session_state.drafted_patent = patent
@@ -392,6 +567,7 @@ with tab3:
             )
         with col2:
             # Create markdown version
+            claims_text = "\n\n".join(patent.claims)
             md_content = f"""# {patent.title}
 
 ## Field of Invention
@@ -410,7 +586,7 @@ with tab3:
 {patent.detailed_description}
 
 ## Claims
-{"\\n\\n".join(patent.claims)}
+{claims_text}
 
 ## Abstract
 {patent.abstract}
@@ -450,10 +626,10 @@ with tab3:
             st.markdown(patent.abstract)
 
 # =============================================================================
-# TAB 4: ANALYSIS DASHBOARD
+# TAB 5: ANALYSIS DASHBOARD
 # =============================================================================
 
-with tab4:
+with tab5:
     st.markdown("### Patent Analysis Dashboard")
 
     if st.session_state.prior_art_results:
@@ -512,10 +688,10 @@ with tab4:
             st.markdown(f"- Low: {low_value}")
 
 # =============================================================================
-# TAB 5: RESEARCH VIDEOS
+# TAB 6: RESEARCH VIDEOS
 # =============================================================================
 
-with tab5:
+with tab6:
     st.markdown("### Patent Research from YouTube")
 
     yt = YouTubeTranscriptProvider()
