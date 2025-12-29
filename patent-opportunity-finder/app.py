@@ -21,6 +21,9 @@ from modules.source_integrations import (
     SourceManager, SourceContext, LocalFolderScanner,
     GitHubIntegration, GoogleDriveIntegration
 )
+from modules.image_generator import (
+    PatentImageManager, KreaAIGenerator, PlaywrightCapture, generate_patent_figures
+)
 import config
 
 # =============================================================================
@@ -157,11 +160,12 @@ st.markdown('<p class="main-header">🔬 Patent Opportunity Finder</p>', unsafe_
 st.markdown('<p class="sub-header">Find prior art, identify opportunities, and draft provisional patents</p>', unsafe_allow_html=True)
 
 # Tabs
-tab1, tab2, tab3, tab4, tab5, tab6 = st.tabs([
+tab1, tab2, tab3, tab4, tab5, tab6, tab7 = st.tabs([
     "📁 Sources",
     "🔍 Prior Art Search",
     "💡 Find Opportunities",
     "📝 Draft Patent",
+    "🖼️ Images & Diagrams",
     "📊 Analysis Dashboard",
     "🎬 Research Videos"
 ])
@@ -626,10 +630,212 @@ with tab4:
             st.markdown(patent.abstract)
 
 # =============================================================================
-# TAB 5: ANALYSIS DASHBOARD
+# TAB 5: IMAGES & DIAGRAMS
 # =============================================================================
 
 with tab5:
+    st.markdown("### Generate Patent Figures & Diagrams")
+    st.markdown("Create USPTO-style diagrams and capture screenshots for your patent application.")
+
+    # Initialize image manager in session state
+    if 'image_manager' not in st.session_state:
+        st.session_state.image_manager = PatentImageManager(config.KREA_API_KEY)
+    if 'generated_images' not in st.session_state:
+        st.session_state.generated_images = []
+
+    # Three columns for different image types
+    col1, col2, col3 = st.columns(3)
+
+    with col1:
+        st.markdown("#### AI-Generated Diagrams")
+        diagram_type = st.selectbox(
+            "Diagram Type",
+            ["System Architecture", "Flowchart", "Block Diagram", "Data Flow", "UI Wireframe"],
+            key="diagram_type_select"
+        )
+
+        diagram_desc = st.text_area(
+            "Describe the diagram",
+            placeholder="e.g., Machine learning inference pipeline with preprocessing, model, and postprocessing stages",
+            height=100,
+            key="diagram_description"
+        )
+
+        if st.button("🎨 Generate Diagram", type="primary", key="gen_diagram_btn"):
+            if diagram_desc:
+                with st.spinner("Generating diagram..."):
+                    type_map = {
+                        "System Architecture": "system_architecture",
+                        "Flowchart": "flowchart",
+                        "Block Diagram": "block_diagram",
+                        "Data Flow": "data_flow",
+                        "UI Wireframe": "ui_wireframe"
+                    }
+                    krea = KreaAIGenerator(config.KREA_API_KEY)
+                    img = krea.generate_patent_diagram(
+                        diagram_desc,
+                        diagram_type=type_map[diagram_type]
+                    )
+                    st.session_state.generated_images.append(img)
+                    st.success(f"Generated {diagram_type} diagram!")
+            else:
+                st.warning("Please enter a description")
+
+    with col2:
+        st.markdown("#### Webpage Screenshots")
+        screenshot_url = st.text_input(
+            "URL to capture",
+            placeholder="https://github.com/owner/repo",
+            key="screenshot_url"
+        )
+
+        full_page = st.checkbox("Capture full page", value=False, key="full_page_check")
+
+        if st.button("📸 Capture Screenshot", key="capture_screenshot_btn"):
+            if screenshot_url:
+                with st.spinner("Capturing webpage..."):
+                    try:
+                        pw = PlaywrightCapture()
+                        img = pw.capture_webpage(screenshot_url, full_page=full_page)
+                        if img:
+                            st.session_state.generated_images.append(img)
+                            st.success("Screenshot captured!")
+                        else:
+                            st.error("Failed to capture. Is Playwright installed?")
+                        pw.close()
+                    except Exception as e:
+                        st.error(f"Error: {str(e)}")
+                        st.info("Run: pip install playwright && playwright install chromium")
+            else:
+                st.warning("Please enter a URL")
+
+    with col3:
+        st.markdown("#### Code Screenshots")
+        code_input = st.text_area(
+            "Paste code to render",
+            placeholder="def my_invention():\n    # Your code here\n    pass",
+            height=150,
+            key="code_input"
+        )
+
+        code_lang = st.selectbox(
+            "Language",
+            ["python", "javascript", "typescript", "java", "cpp", "go", "rust"],
+            key="code_lang_select"
+        )
+
+        if st.button("📷 Render Code", key="render_code_btn"):
+            if code_input:
+                with st.spinner("Rendering code..."):
+                    try:
+                        pw = PlaywrightCapture()
+                        img = pw.capture_code_as_image(code_input, code_lang)
+                        if img:
+                            st.session_state.generated_images.append(img)
+                            st.success("Code rendered!")
+                        else:
+                            st.error("Failed to render. Is Playwright installed?")
+                        pw.close()
+                    except Exception as e:
+                        st.error(f"Error: {str(e)}")
+            else:
+                st.warning("Please paste some code")
+
+    st.markdown("---")
+
+    # Display generated images
+    st.markdown("### Generated Figures")
+
+    if st.session_state.generated_images:
+        for i, img in enumerate(st.session_state.generated_images):
+            with st.expander(f"**FIG. {i+1}** - {img.description[:50]}...", expanded=True):
+                col_img, col_info = st.columns([3, 1])
+
+                with col_img:
+                    if img.format == "svg":
+                        st.markdown(img.image_data.decode('utf-8'), unsafe_allow_html=True)
+                    else:
+                        st.image(img.image_data, caption=f"FIG. {i+1}")
+
+                with col_info:
+                    st.markdown(f"**Source:** {img.source}")
+                    st.markdown(f"**Format:** {img.format}")
+                    st.markdown(f"**Size:** {img.width}x{img.height}")
+
+                    # Download button
+                    st.download_button(
+                        f"📥 Download FIG. {i+1}",
+                        img.image_data,
+                        file_name=f"FIG_{i+1}_{img.filename}",
+                        mime=f"image/{img.format}" if img.format != "svg" else "image/svg+xml",
+                        key=f"download_fig_{i}"
+                    )
+
+                    # Remove button
+                    if st.button(f"🗑️ Remove", key=f"remove_fig_{i}"):
+                        st.session_state.generated_images.pop(i)
+                        st.rerun()
+
+        st.markdown("---")
+
+        # Bulk actions
+        col_bulk1, col_bulk2 = st.columns(2)
+
+        with col_bulk1:
+            if st.button("📦 Download All as ZIP", key="download_all_zip"):
+                import io
+                import zipfile
+
+                zip_buffer = io.BytesIO()
+                with zipfile.ZipFile(zip_buffer, 'w', zipfile.ZIP_DEFLATED) as zf:
+                    for i, img in enumerate(st.session_state.generated_images):
+                        zf.writestr(f"FIG_{i+1}_{img.filename}", img.image_data)
+
+                st.download_button(
+                    "💾 Save ZIP File",
+                    zip_buffer.getvalue(),
+                    file_name=f"patent_figures_{datetime.now().strftime('%Y%m%d')}.zip",
+                    mime="application/zip",
+                    key="save_zip"
+                )
+
+        with col_bulk2:
+            if st.button("🗑️ Clear All Figures", key="clear_all_figs"):
+                st.session_state.generated_images = []
+                st.rerun()
+
+        # Generate Brief Description of Drawings
+        st.markdown("### Brief Description of Drawings")
+        descriptions = []
+        for i, img in enumerate(st.session_state.generated_images, 1):
+            descriptions.append(f"FIG. {i} is a {img.source} showing {img.description}.")
+
+        st.text_area(
+            "Copy this to your patent application:",
+            value="\n\n".join(descriptions),
+            height=150,
+            key="brief_desc_output"
+        )
+
+    else:
+        st.info("No figures generated yet. Use the tools above to create diagrams and screenshots.")
+
+    # Tips
+    st.markdown("---")
+    st.markdown("""
+    **Tips for Patent Figures:**
+    - USPTO requires clear, black and white line drawings
+    - Number each element (100, 101, 102...) and reference in description
+    - Include: System overview, flowcharts, block diagrams, UI mockups
+    - Minimum 3-5 figures for a strong provisional application
+    - Screenshots of prior art can help show differentiation
+    """)
+
+# =============================================================================
+# TAB 6: ANALYSIS DASHBOARD
+# =============================================================================
+
+with tab6:
     st.markdown("### Patent Analysis Dashboard")
 
     if st.session_state.prior_art_results:
@@ -688,10 +894,10 @@ with tab5:
             st.markdown(f"- Low: {low_value}")
 
 # =============================================================================
-# TAB 6: RESEARCH VIDEOS
+# TAB 7: RESEARCH VIDEOS
 # =============================================================================
 
-with tab6:
+with tab7:
     st.markdown("### Patent Research from YouTube")
 
     yt = YouTubeTranscriptProvider()

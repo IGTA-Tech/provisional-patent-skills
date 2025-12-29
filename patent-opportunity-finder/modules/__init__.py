@@ -25,6 +25,13 @@ from .source_integrations import (
     fetch_github_repo,
     fetch_gdrive_folder
 )
+from .image_generator import (
+    PatentImageManager,
+    KreaAIGenerator,
+    PlaywrightCapture,
+    GeneratedImage,
+    generate_patent_figures
+)
 
 __all__ = [
     'PriorArtSearcher',
@@ -48,5 +55,10 @@ __all__ = [
     'GoogleDriveIntegration',
     'scan_local_folder',
     'fetch_github_repo',
-    'fetch_gdrive_folder'
+    'fetch_gdrive_folder',
+    'PatentImageManager',
+    'KreaAIGenerator',
+    'PlaywrightCapture',
+    'GeneratedImage',
+    'generate_patent_figures'
 ]
