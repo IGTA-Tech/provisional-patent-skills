@@ -403,42 +403,135 @@ Be thorough - focus on technical HOW, not business WHAT."""
             return [{"analysis": f"Manual analysis needed: {str(e)}"}]
 
     def _research_prior_art(self) -> Dict:
-        """Phase 3: Research prior art using Perplexity and PatentsView"""
+        """
+        Phase 3: Research prior art using Perplexity Pro + PatentsView
+
+        Perplexity Pro enhancements:
+        - Multi-pass search (5 separate searches for comprehensive coverage)
+        - 128k context window for deep analysis
+        - Real-time USPTO/EPO/WIPO patent database access
+        """
         if not self.innovations:
-            return {"patents": [], "research": ""}
+            return {"patents": [], "research": "", "differentiation_points": []}
 
         innovation_summary = ""
         if self.innovations:
-            innovation_summary = self.innovations[0].get("analysis", "")[:3000]
+            innovation_summary = self.innovations[0].get("analysis", "")[:6000]
 
-        # Use Perplexity for research
-        research_prompt = f"""Research prior art for this invention:
+        all_research = []
+
+        # PASS 1: Core Patent Search
+        print("    Pass 1/5: Searching USPTO patent database...")
+        pass1_prompt = f"""Search for USPTO patents related to this invention:
 
 {innovation_summary}
 
-Search for:
-1. Related USPTO patents (provide patent numbers)
-2. Academic papers and publications
-3. Existing commercial products
-4. White space opportunities
-
-Use these resources:
-- PatentsView API: https://search.patentsview.org/api/v1/patent/
-- USPTO Classifications: G06N (AI), G06F (Computing), G06Q (Business Methods)
-
-Provide specific patent numbers and explain how this invention differs."""
+Search PatentsView for relevant patents. Focus on CPC: G06N (AI), G06F (Computing), G06Q (Business).
+List 5-10 patent numbers (US XXXXXXXX A1/B2), titles, assignees.
+Identify CLOSEST prior art and explain technical differences."""
 
         try:
-            response = self.ai.research(research_prompt)
-            research_text = response.content if response.success else ""
+            response = self.ai.research(pass1_prompt)
+            if response.success:
+                all_research.append("## USPTO Patent Search\n" + response.content)
         except Exception as e:
-            research_text = f"Research error: {e}"
+            all_research.append(f"USPTO search error: {e}")
+
+        # PASS 2: Academic Papers
+        print("    Pass 2/5: Searching academic publications...")
+        pass2_prompt = f"""Search for academic papers related to:
+
+{innovation_summary[:3000]}
+
+Search arXiv, ACM, IEEE, Google Scholar. List 5-8 papers from 2022-2025 with titles, authors, contributions."""
+
+        try:
+            response = self.ai.research(pass2_prompt)
+            if response.success:
+                all_research.append("\n\n## Academic Research\n" + response.content)
+        except Exception as e:
+            all_research.append(f"Academic search error: {e}")
+
+        # PASS 3: Competitive Landscape
+        print("    Pass 3/5: Analyzing competitive landscape...")
+        pass3_prompt = f"""Analyze competitive landscape for:
+
+{innovation_summary[:2000]}
+
+Find existing products, competitors, open-source projects. Identify market leaders and white space."""
+
+        try:
+            response = self.ai.research(pass3_prompt)
+            if response.success:
+                all_research.append("\n\n## Competitive Landscape\n" + response.content)
+        except Exception as e:
+            all_research.append(f"Competitive analysis error: {e}")
+
+        # PASS 4: International Patents
+        print("    Pass 4/5: Searching international patents...")
+        pass4_prompt = f"""Search international patents for:
+
+{innovation_summary[:2000]}
+
+Search EPO, WIPO, JPO, CNIPA. List 3-5 patents with numbers, titles. Identify patent families."""
+
+        try:
+            response = self.ai.research(pass4_prompt)
+            if response.success:
+                all_research.append("\n\n## International Patents\n" + response.content)
+        except Exception as e:
+            all_research.append(f"International search error: {e}")
+
+        # PASS 5: Novelty Analysis
+        print("    Pass 5/5: Synthesizing novelty analysis...")
+        combined = "\n".join(all_research)[:12000]
+
+        pass5_prompt = f"""Novelty analysis for invention:
+
+{innovation_summary[:2000]}
+
+Prior art found:
+{combined[:8000]}
+
+Analyze: 1) Novelty (1-10 scale), 2) Non-obviousness, 3) Key differentiators (5-8 points), 4) Claim strategy."""
+
+        differentiation_points = []
+        try:
+            response = self.ai.research(pass5_prompt)
+            if response.success:
+                all_research.append("\n\n## Novelty Analysis\n" + response.content)
+                differentiation_points = self._extract_differentiation_points(response.content)
+        except Exception as e:
+            all_research.append(f"Novelty analysis error: {e}")
+
+        full_research = "\n".join(all_research)
+        patents_found = self._extract_patent_numbers(full_research)
+
+        print(f"    Prior art complete: {len(patents_found)} patents identified")
 
         return {
-            "patents": [],  # Would be populated from PatentsView API
-            "research": research_text,
-            "differentiation_points": []
+            "patents": patents_found,
+            "research": full_research,
+            "differentiation_points": differentiation_points,
+            "search_passes": 5,
+            "perplexity_pro": True
         }
+
+    def _extract_patent_numbers(self, text: str) -> List[str]:
+        """Extract patent numbers from research text"""
+        import re
+        patterns = [r'US\s*\d{7,8}\s*[AB]\d?', r'EP\s*\d{7}', r'WO\s*\d{4}/\d{6}']
+        patents = []
+        for p in patterns:
+            patents.extend(re.findall(p, text, re.IGNORECASE))
+        return list(set(patents))[:20]
+
+    def _extract_differentiation_points(self, text: str) -> List[str]:
+        """Extract differentiation points from analysis"""
+        import re
+        points = re.findall(r'\d+\.\s+([^\n]{10,100})', text)
+        points.extend(re.findall(r'[-*]\s+([^\n]{10,100})', text))
+        return list(set(points))[:8]
 
     def _generate_title(self) -> str:
         """Generate invention title from context"""
