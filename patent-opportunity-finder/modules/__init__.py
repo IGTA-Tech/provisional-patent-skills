@@ -32,6 +32,23 @@ from .image_generator import (
     GeneratedImage,
     generate_patent_figures
 )
+from .docx_generator import (
+    DocxPatentGenerator,
+    PatentDocument,
+    PatentFigure,
+    InventorInfo,
+    generate_patent_docx
+)
+from .rubric_scorer import (
+    RubricScorer,
+    ScoringResult,
+    score_patent
+)
+from .unified_pipeline import (
+    UnifiedPatentPipeline,
+    PipelineResult,
+    run_patent_pipeline
+)
 
 __all__ = [
     'PriorArtSearcher',
@@ -60,5 +77,16 @@ __all__ = [
     'KreaAIGenerator',
     'PlaywrightCapture',
     'GeneratedImage',
-    'generate_patent_figures'
+    'generate_patent_figures',
+    'DocxPatentGenerator',
+    'PatentDocument',
+    'PatentFigure',
+    'InventorInfo',
+    'generate_patent_docx',
+    'RubricScorer',
+    'ScoringResult',
+    'score_patent',
+    'UnifiedPatentPipeline',
+    'PipelineResult',
+    'run_patent_pipeline'
 ]
